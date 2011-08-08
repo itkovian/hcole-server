@@ -1,0 +1,5 @@
+# HCole Server
+
+HCole server is a web application that allows you to submit optimisation
+sequences to the measurement part of the COLE framework. These sequences
+are then measured and the result will be made available. Sort of.
