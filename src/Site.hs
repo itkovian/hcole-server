@@ -60,13 +60,13 @@ sequence :: Application ()
 sequence = do
     s <- decodedParam "sequence"
     -- check if the sequence exists in the cache
-    v <- fsCacheRequest (unpack s) (Just . id)
+    v <- fsCacheRequest (unpack s) 
     case v of
-      Just f -> do let jsonResponse = T.pack $ JSON.encode ("dit is een test" :: String, 1.0 :: Double)
-                   modifyResponse $ setResponseCode 200 
-                                  . setContentType (pack "application/json")
-                                  . setContentLength (fromIntegral $ T.length jsonResponse) --FIXME
-                   writeText $ jsonResponse 
+      Just (s, c) -> do let jsonResponse = T.pack $ JSON.encode ("dit is een test" :: String, 1.0 :: Double)
+                        modifyResponse $ setResponseCode 200 
+                                       . setContentType (pack "application/json")
+                                       . setContentLength (fromIntegral $ T.length jsonResponse) --FIXME
+                        writeText $ jsonResponse 
       Nothing -> do modifyResponse $ setResponseCode 404
                                    . setContentLength 3
 

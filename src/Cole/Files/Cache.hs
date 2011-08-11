@@ -53,7 +53,13 @@ getSpeedup cf = do
 
 --------------------------------------------------------------------------------
 -- | Get the compilation time data from the cached file
-getCompilationTime = undefined
+getCompilationTime :: CacheFile -> Maybe BS.ByteString
+getCompilationTime cf = do
+    e <- findEntry "compilation_times.csv" (cacheFileEntries cf)
+    case TE.entryContent e of
+      TE.NormalFile bs _ -> Just bs
+      _                  -> Nothing
+        
 
 
 --------------------------------------------------------------------------------

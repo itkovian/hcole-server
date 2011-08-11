@@ -14,16 +14,20 @@ module Snap.Extension.FileSystemCache (
   ) where
 
 import           Control.Monad.Reader
+import qualified Data.ByteString.Lazy as BS
 import           System.Directory (getDirectoryContents)
+import           System.FilePath (combine)
 
 import           Snap.Extension
 import           Snap.Types
 
+import           Cole.Files.Cache
+
 -------------------------------------------------------------------
--- | The MonadCache class. This is the minimalcomplete interface:
+-- | The MonadFSCache class. This is the minimal complete interface:
 class MonadSnap m => MonadFSCache m where
     -- | Check the cache for the given piece of information
-    fsCacheRequest :: FilePath -> (FilePath -> a) -> m (Maybe a)
+    fsCacheRequest :: FilePath -> m (Maybe (BS.ByteString, BS.ByteString))
 
     -- | Insert the new piece of information in the cache
     fsCacheInsert :: FilePath -> m ()
@@ -61,10 +65,16 @@ instance InitializerState FSCacheState where
 -------------------------------------------------------------------
 -- |
 instance HasFileSystemCacheState s => MonadFSCache (SnapExtend s) where
-    fsCacheRequest filename fileTransformer = do 
+    fsCacheRequest filename = do 
         fsCacheState <- asks getFSCacheState
         fss <- liftIO $ getDirectoryContents (fsCacheDir fsCacheState)
-        if filename `elem` fss then return $ Just "FILE FOUND" else return Nothing
+        if filename `elem` fss 
+            then do cf <- liftIO $ mkCacheFile (combine (fsCacheDir fsCacheState) filename)
+                    let info = do s <- getSpeedup cf
+                                  c <- getCompilationTime cf
+                                  Just (s,c)
+                    return info -- :: SnapExtend s (Maybe (BS.ByteString, BS.ByteString))
+            else return Nothing
 
     -- Does nothing at this point
     fsCacheInsert _ = return ()
