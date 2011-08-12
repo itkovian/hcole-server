@@ -21,13 +21,13 @@ import           System.FilePath (combine)
 import           Snap.Extension
 import           Snap.Types
 
-import           Cole.Files.Cache
+import           Cole.ColeData
 
 -------------------------------------------------------------------
 -- | The MonadFSCache class. This is the minimal complete interface:
 class MonadSnap m => MonadFSCache m where
     -- | Check the cache for the given piece of information
-    fsCacheRequest :: FilePath -> m (Maybe (BS.ByteString, BS.ByteString))
+    fsCacheRequest :: FilePath -> m (Maybe ColeData)
 
     -- | Insert the new piece of information in the cache
     fsCacheInsert :: FilePath -> m ()
@@ -69,11 +69,8 @@ instance HasFileSystemCacheState s => MonadFSCache (SnapExtend s) where
         fsCacheState <- asks getFSCacheState
         fss <- liftIO $ getDirectoryContents (fsCacheDir fsCacheState)
         if filename `elem` fss 
-            then do cf <- liftIO $ mkCacheFile (combine (fsCacheDir fsCacheState) filename)
-                    let info = do s <- getSpeedup cf
-                                  c <- getCompilationTime cf
-                                  Just (s,c)
-                    return info -- :: SnapExtend s (Maybe (BS.ByteString, BS.ByteString))
+            then do cd <- liftIO $ mkColeData (combine (fsCacheDir fsCacheState) filename)
+                    return $ Just cd
             else return Nothing
 
     -- Does nothing at this point
