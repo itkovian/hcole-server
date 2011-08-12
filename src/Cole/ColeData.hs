@@ -6,7 +6,7 @@ class. All accesses to the data should pass through here. I think.
 
 -}
 
-module ColeData
+module Cole.ColeData
   ( ColeData
   , mkColeData
   ) where
@@ -18,7 +18,7 @@ import Cole.Files.Cache
 -------------------------------------------------------------------
 -- | Data type for the COLE information. FIXME: should also parse the 
 -- ByteString and get real data out of it.
-data ColeData = 
+data ColeData = ColeData
   { coleRefSpeedup       :: Maybe BS.ByteString
   , coleTrainSpeedup     :: Maybe BS.ByteString
   , coleCompilationTime  :: Maybe BS.ByteString
@@ -40,4 +40,6 @@ mkColeData fp = do
                     }
 
   
+
+
 
