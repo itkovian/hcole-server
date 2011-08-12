@@ -29,9 +29,10 @@ type Application = SnapExtend ApplicationState
 -- templates, and Timer simply to illustrate the config loading differences
 -- between development and production modes.
 data ApplicationState = ApplicationState
-    { templateState :: HeistState Application
-    , timerState    :: TimerState
-    , cacheState    :: FSCacheState
+    { templateState     :: HeistState Application
+    , timerState        :: TimerState
+    , cacheState        :: FSCacheState
+    --, coleConfigState   :: ColeConfigState
     }
 
 
@@ -63,6 +64,6 @@ applicationInitializer :: Initializer ApplicationState
 applicationInitializer = do
     heist <- heistInitializer "resources/templates" id
     timer <- timerInitializer
-    cache <- fsCacheInitializer "/Users/ageorges/tmp/brol"
+    cache <- fsCacheInitializer "/Users/ageorges/tmp/hcole-server"
     return $ ApplicationState heist timer cache
 

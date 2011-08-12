@@ -67,6 +67,7 @@ instance InitializerState FSCacheState where
 instance HasFileSystemCacheState s => MonadFSCache (SnapExtend s) where
     fsCacheRequest filename = do 
         fsCacheState <- asks getFSCacheState
+        -- FIXME: this should be made cleaner.
         fss <- liftIO $ getDirectoryContents (fsCacheDir fsCacheState)
         if filename `elem` fss 
             then do cd <- liftIO $ mkColeData (combine (fsCacheDir fsCacheState) filename)

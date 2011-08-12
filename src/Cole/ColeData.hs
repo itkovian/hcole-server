@@ -43,12 +43,12 @@ mkColeData fp = do
                     }
 
 instance A.ToJSON ColeData where
-  toJSON cd = A.object [ pack "coleRefSpeedup"       A..= coleRefSpeedup cd
-                       , pack "coleTrainSpeedup"     A..= coleTrainSpeedup cd
-                       , pack "coleCompilationTime"  A..= coleCompilationTime cd
-                       , pack "coleCodeSize"         A..= coleCodeSize cd
-                       , pack "coleRefEnergyUsage"   A..= coleRefEnergyUsage cd
-                       , pack "coleTrainEnergyUsage" A..= coleTrainEnergyUsage cd
+  toJSON cd = A.object [ "coleRefSpeedup"       A..= coleRefSpeedup cd
+                       , "coleTrainSpeedup"     A..= coleTrainSpeedup cd
+                       , "coleCompilationTime"  A..= coleCompilationTime cd
+                       , "coleCodeSize"         A..= coleCodeSize cd
+                       , "coleRefEnergyUsage"   A..= coleRefEnergyUsage cd
+                       , "coleTrainEnergyUsage" A..= coleTrainEnergyUsage cd
                        ]
 
 -- FIXME: Perhaps we should also have a FromJSON instance?

@@ -20,7 +20,7 @@ import           Application
 
 coleCachePlaceHolder :: Splice Application
 coleCachePlaceHolder = do 
-  dirListing <- liftIO . getDirectoryContents $ "/Users/ageorges/tmp/brol"
+  dirListing <- liftIO . getDirectoryContents $ "/Users/ageorges/tmp/hcole-server"
   return $ map (TextNode . T.pack) dirListing
 
 

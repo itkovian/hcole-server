@@ -12,11 +12,13 @@ module Site
   ) where
 
 import           Control.Applicative
+import qualified Data.Aeson as A
 import           Data.ByteString.Char8 (unpack, pack)
 import           Data.Maybe
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
-import qualified Text.JSON as JSON
+import qualified Data.Text.Lazy as TL
+import qualified Data.Text.Lazy.Encoding as TLE
 
 import           Snap.Extension.Heist
 import           Snap.Extension.Timer
@@ -60,13 +62,20 @@ sequence :: Application ()
 sequence = do
     s <- decodedParam "sequence"
     -- check if the sequence exists in the cache
+    -- FIXME: This should follow a different pattern. Once we have the DB
+    -- added to the application, we first check the DB for the key. This
+    -- has three possible results: (i) the sequence has been measured, i.e., the 
+    -- data is available in the filesystem cache, (ii) the sequence is being 
+    -- measured, thus we need not launch a new measurement, and (iii) the sequence 
+    -- is unknown to the system, so we need to launch a measurement and update the
+    -- DB accordingly.
     v <- fsCacheRequest (unpack s) 
     case v of
-      Just (s, c) -> do let jsonResponse = T.pack $ JSON.encode ("dit is een test" :: String, 1.0 :: Double)
-                        modifyResponse $ setResponseCode 200 
-                                       . setContentType (pack "application/json")
-                                       . setContentLength (fromIntegral $ T.length jsonResponse) --FIXME
-                        writeText $ jsonResponse 
+      Just coleData -> do let jsonResponse = TLE.decodeUtf8 . A.encode . A.toJSON $ coleData
+                          modifyResponse $ setResponseCode 200 
+                                         . setContentType (pack "application/json")
+                                         . setContentLength (fromIntegral $ TL.length jsonResponse) --FIXME
+                          writeText . TL.toStrict $ jsonResponse 
       Nothing -> do modifyResponse $ setResponseCode 404
                                    . setContentLength 3
 
