@@ -49,36 +49,42 @@ mkCacheFile fp = do
 --------------------------------------------------------------------------------
 -- | Get the speedup data from the cached file
 getRefSpeedup :: CacheFile -> Maybe BS.ByteString
-getRefSpeedup cf = getCacheFileContents "exec_times_ref.csv"
+getRefSpeedup cf = getCacheFileContents cf "exec_times_ref.csv"
+
+
+--------------------------------------------------------------------------------
+-- | Get the speedup data from the cached file
+getTrainSpeedup :: CacheFile -> Maybe BS.ByteString
+getTrainSpeedup cf = getCacheFileContents cf "exec_times_train.csv"
 
 
 --------------------------------------------------------------------------------
 -- | Get the compilation time data from the cached file
 getCompilationTime :: CacheFile -> Maybe BS.ByteString
-getCompilationTime cf = getCacheFileContents "comp_times.csv"
+getCompilationTime cf = getCacheFileContents cf "comp_times.csv"
         
 
 --------------------------------------------------------------------------------
 -- | Get the code size data from the cached file 
 getCodeSize :: CacheFile -> Maybe BS.ByteString
-getCodeSize cf = getCacheFileContents "code_sizes.csv"
+getCodeSize cf = getCacheFileContents cf "code_sizes.csv"
 
 
 --------------------------------------------------------------------------------
 -- | Get the energy usage data from the cached file
 getRefEnergyUsage :: CacheFile -> Maybe BS.ByteString
-getRefEnergyUsage cf = getCacheFileContents "energy_usage_ref.csv"
+getRefEnergyUsage cf = getCacheFileContents cf "energy_usage_ref.csv"
 
 
 --------------------------------------------------------------------------------
 -- | Get the energy usage data from the cached file
 getTrainEnergyUsage :: CacheFile -> Maybe BS.ByteString
-getTrainEnergyUsage cf = getCacheFileContents "energy_usage_train.csv"
+getTrainEnergyUsage cf = getCacheFileContents cf "energy_usage_train.csv"
 
 
 --------------------------------------------------------------------------------
 -- | Get the contents of a normal file given by its filename (as a suffix)
-getCacheFileContents :: CacheFile -> FilePathSuffix -> Maybe BS.ByteString
+getCacheFileContents :: CacheFile -> FilePath -> Maybe BS.ByteString
 getCacheFileContents cf fp = do
     e <- findEntry fp (cacheFileEntries cf)
     case TE.entryContent e of
