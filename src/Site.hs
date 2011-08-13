@@ -12,6 +12,7 @@ module Site
   ) where
 
 import           Control.Applicative
+import           Control.Monad.IO.Class (liftIO)
 import qualified Data.Aeson as A
 import           Data.ByteString.Char8 (unpack, pack)
 import           Data.Maybe
@@ -22,6 +23,7 @@ import qualified Data.Text.Lazy.Encoding as TLE
 
 import           Snap.Extension.Heist
 import           Snap.Extension.Timer
+import           Snap.Extension.HDBC
 import           Snap.Util.FileServe
 import           Snap.Types
 import           Text.Templating.Heist
@@ -30,6 +32,8 @@ import           Application
 import           Splice.Cole
 import           Snap.Extension.FileSystemCache
 
+import qualified Cole.Cole as Cole
+import qualified Cole.ColeDB as ColeDB
 ------------------------------------------------------------------------------
 -- | Renders the front page of the sample site.
 --
@@ -61,7 +65,10 @@ cache = heistLocal (bindSplices cacheSplices) $ render "colecache"
 sequence :: Application ()
 sequence = do
     s <- decodedParam "sequence"
+    -- Get the connection to the database
+    conn <- connWrapper
     -- check if the sequence exists in the cache
+    experimentStatus <- liftIO $ ColeDB.lookup conn (Cole.ColeSequence s)
     -- FIXME: This should follow a different pattern. Once we have the DB
     -- added to the application, we first check the DB for the key. This
     -- has three possible results: (i) the sequence has been measured, i.e., the 
@@ -69,15 +76,21 @@ sequence = do
     -- measured, thus we need not launch a new measurement, and (iii) the sequence 
     -- is unknown to the system, so we need to launch a measurement and update the
     -- DB accordingly.
-    v <- fsCacheRequest (unpack s) 
-    case v of
-      Just coleData -> do let jsonResponse = TLE.decodeUtf8 . A.encode . A.toJSON $ coleData
-                          modifyResponse $ setResponseCode 200 
-                                         . setContentType (pack "application/json")
-                                         . setContentLength (fromIntegral $ TL.length jsonResponse) --FIXME
-                          writeText . TL.toStrict $ jsonResponse 
-      Nothing -> do modifyResponse $ setResponseCode 404
-                                   . setContentLength 3
+    -- FIXME: All lazy stuff should probably become strict as we need the results
+    -- anyways.
+    case experimentStatus of
+        ColeDB.ColeExperimentDone -> do 
+            v <- fsCacheRequest (concat $ ["key_", unpack s, ".tgz"]) 
+            case v of
+                Just coleData -> do let jsonResponse = TLE.decodeUtf8 . A.encode . A.toJSON $ coleData
+                                    modifyResponse $ setResponseCode 200 
+                                                   . setContentType (pack "application/json")
+                                                   . setContentLength (fromIntegral $ TL.length jsonResponse) --FIXME
+                                    writeText . TL.toStrict $ jsonResponse 
+                Nothing -> do modifyResponse $ setResponseCode 404
+                                             . setContentLength 3
+        ColeDB.ColeExperimentBusy -> undefined
+        ColeDB.ColeExperimentUnknown -> undefined
 
 
   where

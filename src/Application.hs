@@ -14,7 +14,8 @@ import           Snap.Extension
 import           Snap.Extension.Heist.Impl
 import           Snap.Extension.Timer.Impl
 import           Snap.Extension.FileSystemCache
-
+import           Snap.Extension.HDBC
+import           Snap.Extension.HDBC.Sqlite3
 
 ------------------------------------------------------------------------------
 -- | 'Application' is our application's monad. It uses 'SnapExtend' from
@@ -32,6 +33,7 @@ data ApplicationState = ApplicationState
     { templateState     :: HeistState Application
     , timerState        :: TimerState
     , cacheState        :: FSCacheState
+    , hdbcState         :: HDBCState
     --, coleConfigState   :: ColeConfigState
     }
 
@@ -55,6 +57,12 @@ instance HasFileSystemCacheState ApplicationState where
 
 
 ------------------------------------------------------------------------------
+instance HasHDBCState ApplicationState where
+    getHDBCState = hdbcState
+    setHDBCState s a = a { hdbcState = s }
+
+
+------------------------------------------------------------------------------
 -- | The 'Initializer' for ApplicationState. For more on 'Initializer's, see
 -- the documentation from the snap package. Briefly, this is used to
 -- generate the 'ApplicationState' needed for our application and will
@@ -65,5 +73,6 @@ applicationInitializer = do
     heist <- heistInitializer "resources/templates" id
     timer <- timerInitializer
     cache <- fsCacheInitializer "/Users/ageorges/tmp/hcole-server"
-    return $ ApplicationState heist timer cache
+    hdbc  <- hdbcInitializer "resources/coleDB_test.db"
+    return $ ApplicationState heist timer cache hdbc
 

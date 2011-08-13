@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
 {-
 
-Implementation of the Cache typeclass by using the filesystem directly.
+Provides access to cached files in the COLE cache.
 
 -}
 
@@ -68,6 +68,7 @@ instance HasFileSystemCacheState s => MonadFSCache (SnapExtend s) where
     fsCacheRequest filename = do 
         fsCacheState <- asks getFSCacheState
         -- FIXME: this should be made cleaner.
+        -- XXX: introduce the DB layer here? Prolly not.
         fss <- liftIO $ getDirectoryContents (fsCacheDir fsCacheState)
         if filename `elem` fss 
             then do cd <- liftIO $ mkColeData (combine (fsCacheDir fsCacheState) filename)
