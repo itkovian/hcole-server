@@ -23,7 +23,7 @@ newtype ColeConfig = ColeConfig { runConfig :: M.Map BS.ByteString BS.ByteString
 coleConfig :: ColeConfig
 coleConfig = ColeConfig $ M.fromList $ map (\(k, v) -> (BS.pack k, BS.pack v)) $
     [ ( "ColeExperimentHome", (home </> "work/det_opt_flags_LLVM/train-WEKA-modelByBenchmark_by-COLE_gastly_LLVM-svn"))
-    , ( "ColeExperimentSumbitScript", "submit_experiments_fast.sh")
+    , ( "ColeExperimentSubmitScript", "submit_experiments_fast.sh")
     ]
   where home = unsafePerformIO $ getEnv "HOME" -- FIXME: this is fugly. 
 
