@@ -10,12 +10,17 @@ module Application
   , applicationInitializer
   ) where
 
+import           Control.Concurrent (forkIO)
+import           Control.Monad.IO.Class (liftIO)
+
 import           Snap.Extension
 import           Snap.Extension.Heist.Impl
 import           Snap.Extension.Timer.Impl
 import           Snap.Extension.FileSystemCache
 import           Snap.Extension.HDBC
 import           Snap.Extension.HDBC.Sqlite3
+
+import           Cole.ColeWatchdog (coleWatchdog)
 
 ------------------------------------------------------------------------------
 -- | 'Application' is our application's monad. It uses 'SnapExtend' from
@@ -74,5 +79,7 @@ applicationInitializer = do
     timer <- timerInitializer
     cache <- fsCacheInitializer "/Users/ageorges/tmp/hcole-server"
     hdbc  <- hdbcInitializer "resources/coleDB_test.db"
+    let HDBCState conn = hdbc
+    liftIO $ forkIO $ coleWatchdog conn (fsCacheLocation cache)
     return $ ApplicationState heist timer cache hdbc
 

@@ -84,7 +84,9 @@ sequence = do
                 Nothing -> do modifyResponse $ setResponseCode 404
                                              . setContentLength 3
         ColeDB.ColeExperimentBusy -> undefined
-        ColeDB.ColeExperimentUnknown -> undefined
+        ColeDB.ColeExperimentUnknown -> do liftIO $ ColeJob.launchJob conn s
+                                           writeText . TL.toStrict . TLE.decodeUtf8 . A.encode . A.toJSON $ ( "Inserted new experiment" :: String
+                                                                                                            , Cole.runSequence s)
 
 
   where
@@ -108,6 +110,5 @@ site :: Application ()
 site = route [ ("/",                      index)
              , ("/cache",                 cache)
              , ("/sequence/:sequence",    Site.sequence)
-             , ("/echo/:stuff",           echo)
              ]
        <|> serveDirectory "resources/static"

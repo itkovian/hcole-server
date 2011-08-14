@@ -10,6 +10,7 @@ module Cole.ColeDB
   , Cole.ColeDB.lookup
   , insertLaunchedSequence
   , insertErrorSequence
+  , updateSequenceToDone
   ) where
 
 import           Data.ByteString.Char8 (unpack)
@@ -74,14 +75,24 @@ lookup conn sequence = do
 -------------------------------------------------------------------
 -- Set a sequence to the busy state in the DB.
 insertLaunchedSequence :: HDBC.ConnWrapper -> ColeSequence -> IO Integer
-insertLaunchedSequence conn sequence = HDBC.run conn "INSERT INTO experiments VALUES (NULL, ?, ?)" [HDBC.toSql $ runSequence sequence, HDBC.toSql ColeExperimentBusy]
+insertLaunchedSequence conn sequence = do insertResult <- HDBC.run conn "INSERT INTO experiments VALUES (NULL, ?, ?)" [HDBC.toSql $ runSequence sequence, HDBC.toSql ColeExperimentBusy] 
+                                          HDBC.commit conn
+                                          return insertResult
 
 
 -------------------------------------------------------------------
 -- Set a sequence to the error state in the DB.
 insertErrorSequence :: HDBC.ConnWrapper -> ColeSequence -> String -> Int -> IO Integer
-insertErrorSequence conn sequence s i = HDBC.run conn "INSERT INTO experiments VALUES (NULL, ?, ?)" [HDBC.toSql $ runSequence sequence, HDBC.toSql (ColeExperimentError s i)]
+insertErrorSequence conn sequence s i = do insertResult <- HDBC.run conn "INSERT INTO experiments VALUES (NULL, ?, ?)" [HDBC.toSql $ runSequence sequence, HDBC.toSql (ColeExperimentError s i)]
+                                           HDBC.commit conn
+                                           return insertResult
 
 
+-------------------------------------------------------------------
+-- Upgrade the state in the DB to done.
+updateSequenceToDone :: HDBC.ConnWrapper -> ColeSequence -> IO Integer
+updateSequenceToDone conn sequence = do updateResult <- HDBC.run conn "UPDATE experiments SET state=? WHERE key=?" [HDBC.toSql ColeExperimentDone, HDBC.toSql $ runSequence sequence]
+                                        HDBC.commit conn
+                                        return updateResult
 
 

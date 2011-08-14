@@ -8,6 +8,7 @@ General stuff for COLE.
 module Cole.Cole 
   ( ColeSequence (..)
   , getConfigInfo
+  , cacheFilename
   )
   where
 
@@ -36,3 +37,9 @@ coleConfig = ColeConfig $ M.fromList $ map (\(k, v) -> (T.pack k, T.pack v)) $
 -- Getters for the configuration
 getConfigInfo :: T.Text -> Maybe T.Text
 getConfigInfo key = M.lookup key (runColeConfig coleConfig)
+
+
+-- Make the filename of the cached file from the given sequence
+cacheFilename :: ColeSequence -> FilePath
+cacheFilename sequence = "key_" ++ T.unpack (runSequence sequence) ++ ".tgz" 
+

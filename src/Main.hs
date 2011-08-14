@@ -53,6 +53,7 @@ import           Snap.Extension.Server
 import           Application
 import           Site
 
+
 main :: IO ()
 #ifdef DEVELOPMENT
 main = do
@@ -64,5 +65,5 @@ main = do
     try $ quickHttpServe snap :: IO (Either SomeException ())
     cleanup
 #else
-main = quickHttpServe applicationInitializer site
+main = do quickHttpServe applicationInitializer site
 #endif

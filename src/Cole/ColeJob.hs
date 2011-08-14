@@ -38,15 +38,14 @@ launchJob conn sequence = do
     -- create temporary file and store the sequence in it
     currentTempDir <- catch (getTemporaryDirectory) (\_ -> return ".")
     (jobTempFile, jobTempH) <- openTempFile currentTempDir "hcole-server.job"
-    BS.writeFile jobTempFile $ TE.encodeUtf8 $ runSequence sequence
+    BS.hPut jobTempH $ TE.encodeUtf8 $ runSequence sequence
     hClose jobTempH
      
     -- fire up the job; the Cole module holds the location details?
     let jobScript = (T.unpack . fromJust $ getConfigInfo "ColeExperimentHome") </> (T.unpack . fromJust $ getConfigInfo "ColeExperimentSubmitScript") 
-    forkIO $ do exitCode <- rawSystem jobScript [jobScript, jobTempFile]
-                case exitCode of
-                    ExitSuccess   -> do insertLaunchedSequence conn sequence
-                                        return ()
-                    ExitFailure e -> do insertErrorSequence conn sequence "Failure launching the job" e
-                                        return ()
+    forkIO $ do exitCode <- rawSystem  jobScript [jobTempFile]
+                insertCode <- case exitCode of
+                                ExitSuccess   -> insertLaunchedSequence conn sequence
+                                ExitFailure e -> insertErrorSequence conn sequence "Failure launching the job" e
+                return ()
 
