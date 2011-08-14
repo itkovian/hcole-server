@@ -64,11 +64,11 @@ cache = heistLocal (bindSplices cacheSplices) $ render "colecache"
 -- Otherwise, a 404 error message is returned
 sequence :: Application ()
 sequence = do
-    s <- decodedParam "sequence"
+    s <- Cole.ColeSequence <$> decodedParam "sequence"
     -- Get the connection to the database
     conn <- connWrapper
     -- check if the sequence exists in the cache
-    experimentStatus <- liftIO $ ColeDB.lookup conn (Cole.ColeSequence s)
+    experimentStatus <- liftIO $ ColeDB.lookup conn s
     -- FIXME: This should follow a different pattern. Once we have the DB
     -- added to the application, we first check the DB for the key. This
     -- has three possible results: (i) the sequence has been measured, i.e., the 
@@ -80,7 +80,7 @@ sequence = do
     -- anyways.
     case experimentStatus of
         ColeDB.ColeExperimentDone -> do 
-            v <- fsCacheRequest (concat $ ["key_", unpack s, ".tgz"]) 
+            v <- fsCacheRequest (concat $ ["key_", unpack $ Cole.runSequence s, ".tgz"]) 
             case v of
                 Just coleData -> do let jsonResponse = TLE.decodeUtf8 . A.encode . A.toJSON $ coleData
                                     modifyResponse $ setResponseCode 200 
