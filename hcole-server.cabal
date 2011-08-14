@@ -34,6 +34,7 @@ Executable coleserver
     json >= 0.4.4,
     MonadCatchIO-transformers >= 0.2.1 && < 0.3,
     mtl >= 2 && < 3,
+    process >= 1.0.1,
     snap == 0.5.*,
     snap-core == 0.5.*,
     snap-extension-hdbc == 0.0.*,

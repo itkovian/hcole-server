@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, OverloadedStrings #-}
 {-
 
 Provides access to cached files in the COLE cache.

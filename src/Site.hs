@@ -34,6 +34,7 @@ import           Snap.Extension.FileSystemCache
 
 import qualified Cole.Cole as Cole
 import qualified Cole.ColeDB as ColeDB
+import qualified Cole.ColeJob as ColeJob
 ------------------------------------------------------------------------------
 -- | Renders the front page of the sample site.
 --
@@ -64,23 +65,16 @@ cache = heistLocal (bindSplices cacheSplices) $ render "colecache"
 -- Otherwise, a 404 error message is returned
 sequence :: Application ()
 sequence = do
-    s <- Cole.ColeSequence <$> decodedParam "sequence"
+    s <- Cole.ColeSequence <$> TE.decodeUtf8 <$> decodedParam "sequence"
     -- Get the connection to the database
     conn <- connWrapper
     -- check if the sequence exists in the cache
     experimentStatus <- liftIO $ ColeDB.lookup conn s
-    -- FIXME: This should follow a different pattern. Once we have the DB
-    -- added to the application, we first check the DB for the key. This
-    -- has three possible results: (i) the sequence has been measured, i.e., the 
-    -- data is available in the filesystem cache, (ii) the sequence is being 
-    -- measured, thus we need not launch a new measurement, and (iii) the sequence 
-    -- is unknown to the system, so we need to launch a measurement and update the
-    -- DB accordingly.
     -- FIXME: All lazy stuff should probably become strict as we need the results
     -- anyways.
     case experimentStatus of
         ColeDB.ColeExperimentDone -> do 
-            v <- fsCacheRequest (concat $ ["key_", unpack $ Cole.runSequence s, ".tgz"]) 
+            v <- fsCacheRequest (T.unpack . T.concat $ ["key_", Cole.runSequence s, ".tgz"]) 
             case v of
                 Just coleData -> do let jsonResponse = TLE.decodeUtf8 . A.encode . A.toJSON $ coleData
                                     modifyResponse $ setResponseCode 200 
