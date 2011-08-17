@@ -15,6 +15,7 @@ module Cole.ColeDB
 
 import           Data.ByteString.Char8 (unpack)
 import           Data.Convertible.Base (Convertible, ConvertError (..), safeConvert)
+import           Data.Time.Clock.POSIX (getPOSIXTime)
 import qualified Database.HDBC as HDBC
 
 import Cole.Cole
@@ -75,7 +76,8 @@ lookup conn sequence = do
 -------------------------------------------------------------------
 -- Set a sequence to the busy state in the DB.
 insertLaunchedSequence :: HDBC.ConnWrapper -> ColeSequence -> IO Integer
-insertLaunchedSequence conn sequence = do insertResult <- HDBC.run conn "INSERT INTO experiments VALUES (NULL, ?, ?)" [HDBC.toSql $ runSequence sequence, HDBC.toSql ColeExperimentBusy] 
+insertLaunchedSequence conn sequence = do time <- getPOSIXTime
+                                          insertResult <- HDBC.run conn "INSERT INTO experiments VALUES (NULL, ?, ?, ?)" [HDBC.toSql time, HDBC.toSql $ runSequence sequence, HDBC.toSql ColeExperimentBusy] 
                                           HDBC.commit conn
                                           return insertResult
 
@@ -83,7 +85,8 @@ insertLaunchedSequence conn sequence = do insertResult <- HDBC.run conn "INSERT 
 -------------------------------------------------------------------
 -- Set a sequence to the error state in the DB.
 insertErrorSequence :: HDBC.ConnWrapper -> ColeSequence -> String -> Int -> IO Integer
-insertErrorSequence conn sequence s i = do insertResult <- HDBC.run conn "INSERT INTO experiments VALUES (NULL, ?, ?)" [HDBC.toSql $ runSequence sequence, HDBC.toSql (ColeExperimentError s i)]
+insertErrorSequence conn sequence s i = do time <- getPOSIXTime
+                                           insertResult <- HDBC.run conn "INSERT INTO experiments VALUES (NULL, ?, ?, ?)" [HDBC.toSql time, HDBC.toSql $ runSequence sequence, HDBC.toSql (ColeExperimentError s i)]
                                            HDBC.commit conn
                                            return insertResult
 

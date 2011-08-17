@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-
 
 This module defines our application's monad and any application-specific
@@ -12,6 +13,8 @@ module Application
 
 import           Control.Concurrent (forkIO)
 import           Control.Monad.IO.Class (liftIO)
+import           Data.Maybe (fromJust)
+import qualified Data.Text as T
 
 import           Snap.Extension
 import           Snap.Extension.Heist.Impl
@@ -20,6 +23,7 @@ import           Snap.Extension.FileSystemCache
 import           Snap.Extension.HDBC
 import           Snap.Extension.HDBC.Sqlite3
 
+import           Cole.Cole (getConfigInfo)
 import           Cole.ColeWatchdog (coleWatchdog)
 
 ------------------------------------------------------------------------------
@@ -77,7 +81,7 @@ applicationInitializer :: Initializer ApplicationState
 applicationInitializer = do
     heist <- heistInitializer "resources/templates" id
     timer <- timerInitializer
-    cache <- fsCacheInitializer "/Users/ageorges/tmp/hcole-server"
+    cache <- fsCacheInitializer $ T.unpack . fromJust $ getConfigInfo "ColeExperimentCache"
     hdbc  <- hdbcInitializer "resources/coleDB_test.db"
     let HDBCState conn = hdbc
     liftIO $ forkIO $ coleWatchdog conn (fsCacheLocation cache)
