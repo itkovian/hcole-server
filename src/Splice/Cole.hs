@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-|
 
 This file contains the splices required by the 
@@ -11,16 +12,18 @@ module Splice.Cole
   ) where
 
 import           Control.Monad.IO.Class (liftIO)
+import           Data.Maybe (fromJust)
 import qualified Data.Text as T
 import           System.Directory (getDirectoryContents)
 import           Text.Templating.Heist
 import           Text.XmlHtml
 
 import           Application
+import           Cole.Cole (getConfigInfo)
 
 coleCachePlaceHolder :: Splice Application
 coleCachePlaceHolder = do 
-  dirListing <- liftIO . getDirectoryContents $ "/Users/ageorges/tmp/hcole-server"
+  dirListing <- liftIO . getDirectoryContents $ T.unpack . fromJust $ getConfigInfo "ColeExperimentCache" -- "/Users/ageorges/tmp/hcole-server"
   return $ map (TextNode . T.pack) dirListing
 
 
