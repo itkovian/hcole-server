@@ -44,8 +44,8 @@ launchJob conn sequence = do
      
     -- fire up the job; the Cole module holds the location details?
     let jobScript = (T.unpack . fromJust $ getConfigInfo "ColeExperimentHome") </> (T.unpack . fromJust $ getConfigInfo "ColeExperimentSubmitScript") 
-    forkIO $ do path <- getEnv "PATH"
-                putEnv $ "PATH=$PATH:" ++ (T.unpack . fromJust $ getConfigInfo "ColeExperimentHome") 
+    forkIO $ do path <- fmap fromJust $ getEnv "PATH"
+                putEnv $ "PATH=" ++ path ++ ":" ++ (T.unpack . fromJust $ getConfigInfo "ColeExperimentHome") 
                 exitCode <- rawSystem  jobScript [jobTempFile]
                 insertCode <- case exitCode of
                                 ExitSuccess   -> insertLaunchedSequence conn sequence
