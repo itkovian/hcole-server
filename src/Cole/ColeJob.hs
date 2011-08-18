@@ -21,6 +21,7 @@ import           System.Directory
 import           System.Exit
 import           System.FilePath ((</>))
 import           System.IO
+import           System.Posix.Env
 
 import           Cole.Cole
 import           Cole.ColeDB
@@ -43,7 +44,9 @@ launchJob conn sequence = do
      
     -- fire up the job; the Cole module holds the location details?
     let jobScript = (T.unpack . fromJust $ getConfigInfo "ColeExperimentHome") </> (T.unpack . fromJust $ getConfigInfo "ColeExperimentSubmitScript") 
-    forkIO $ do exitCode <- rawSystem  jobScript [jobTempFile]
+    forkIO $ do path <- getEnv "PATH"
+                putEnv $ "PATH=$PATH:" ++ (T.unpack . fromJust $ getConfigInfo "ColeExperimentHome") 
+                exitCode <- rawSystem  jobScript [jobTempFile]
                 insertCode <- case exitCode of
                                 ExitSuccess   -> insertLaunchedSequence conn sequence
                                 ExitFailure e -> insertErrorSequence conn sequence "Failure launching the job" e
