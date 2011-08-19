@@ -23,6 +23,7 @@ coleWatchdog :: HDBC.ConnWrapper -- ^ Connection to the database
              -> FilePath    -- ^ Directory where cached files can be found
              -> IO ()       -- ^ Resulting type, we will launch this from a forkIO
 coleWatchdog conn cacheDir = do
+    putStrLn "Cole Watchdog active ..."
     results <- HDBC.quickQuery' conn "SELECT key FROM experiments WHERE state=\"ColeExperimentBusy\"" [] 
     forM_ results $ \[result] -> do let sequence = Cole.ColeSequence $ HDBC.fromSql result 
                                     putStrLn $ "DEBUG: busy key: " ++ (show $ Cole.runSequence sequence)
