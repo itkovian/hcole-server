@@ -25,6 +25,7 @@ coleWatchdog :: HDBC.ConnWrapper -- ^ Connection to the database
 coleWatchdog conn cacheDir = do
     results <- HDBC.quickQuery' conn "SELECT key FROM experiments WHERE state=\"ColeExperimentBusy\"" [] 
     forM_ results $ \[result] -> do let sequence = Cole.ColeSequence $ HDBC.fromSql result 
+                                    putStrLn $ "DEBUG: busy key: " ++ (show $ Cole.runSequence sequence)
                                     exist <- doesFileExist $ cacheDir </> (Cole.cacheFilename sequence)
                                     when exist $ void $ ColeDB.updateSequenceToDone conn sequence
     threadDelay $ 5 * 60 * 1000 * 1000 
