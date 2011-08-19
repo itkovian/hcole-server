@@ -77,7 +77,7 @@ lookup conn sequence = do
 -- Set a sequence to the busy state in the DB.
 insertLaunchedSequence :: HDBC.ConnWrapper -> ColeSequence -> IO Integer
 insertLaunchedSequence conn sequence = do time <- getPOSIXTime
-                                          insertResult <- HDBC.run conn "INSERT INTO experiments VALUES (NULL, ?, ?, ?)" [HDBC.toSql time, HDBC.toSql $ runSequence sequence, HDBC.toSql ColeExperimentBusy] 
+                                          insertResult <- HDBC.run conn "INSERT INTO experiments VALUES (NULL, ?, ?, ?)" [HDBC.toSql $ runSequence sequence, HDBC.toSql ColeExperimentBusy, HDBC.toSql time] 
                                           HDBC.commit conn
                                           return insertResult
 
@@ -86,7 +86,7 @@ insertLaunchedSequence conn sequence = do time <- getPOSIXTime
 -- Set a sequence to the error state in the DB.
 insertErrorSequence :: HDBC.ConnWrapper -> ColeSequence -> String -> Int -> IO Integer
 insertErrorSequence conn sequence s i = do time <- getPOSIXTime
-                                           insertResult <- HDBC.run conn "INSERT INTO experiments VALUES (NULL, ?, ?, ?)" [HDBC.toSql time, HDBC.toSql $ runSequence sequence, HDBC.toSql (ColeExperimentError s i)]
+                                           insertResult <- HDBC.run conn "INSERT INTO experiments VALUES (NULL, ?, ?, ?)" [HDBC.toSql $ runSequence sequence, HDBC.toSql (ColeExperimentError s i), HDBC.toSql time]
                                            HDBC.commit conn
                                            return insertResult
 
