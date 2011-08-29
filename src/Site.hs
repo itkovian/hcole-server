@@ -14,7 +14,7 @@ module Site
 import           Control.Applicative
 import           Control.Monad.IO.Class (liftIO)
 import qualified Data.Aeson as A
-import           Data.ByteString.Char8 (unpack, pack)
+import           Data.ByteString.Char8 (unpack, pack, concat)
 import           Data.Maybe
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
@@ -80,11 +80,19 @@ sequence = do
                                     modifyResponse $ setResponseCode 200 
                                                    . setContentType (pack "application/json")
                                                    . setContentLength (fromIntegral $ TL.length jsonResponse) --FIXME
+                                    logError "Found key with state Done" 
                                     writeText . TL.toStrict $ jsonResponse 
                 Nothing -> do modifyResponse $ setResponseCode 404
                                              . setContentLength 3
-        ColeDB.ColeExperimentBusy -> undefined
+        ColeDB.ColeExperimentBusy -> do startTime <- liftIO $ ColeDB.getJobStartTime conn s
+                                        let jsonResponse = TLE.decodeUtf8 . A.encode . A.toJSON $ "Job for sequence " ++ show (Cole.runSequence s) ++ "started at" ++ show startTime
+                                        modifyResponse $ setResponseCode 200
+                                                       . setContentType (pack "application/json")
+                                                       . setContentLength (fromIntegral $ TL.length jsonResponse)
+                                        logError $ "Found key in busy state started at " ++ show starTime
+                                        writeText . TL.toStrict $ jsonResponse
         ColeDB.ColeExperimentUnknown -> do liftIO $ ColeJob.launchJob conn s
+                                           logError "Did not find key" ++ show $ Cole.ColeSequence s
                                            writeText . TL.toStrict . TLE.decodeUtf8 . A.encode . A.toJSON $ ( "Inserted new experiment" :: String
                                                                                                             , Cole.runSequence s)
 

@@ -11,11 +11,12 @@ module Cole.ColeDB
   , insertLaunchedSequence
   , insertErrorSequence
   , updateSequenceToDone
+  , getJobStartTime
   ) where
 
 import           Data.ByteString.Char8 (unpack)
 import           Data.Convertible.Base (Convertible, ConvertError (..), safeConvert)
-import           Data.Time.Clock.POSIX (getPOSIXTime)
+import           Data.Time.Clock.POSIX (getPOSIXTime, POSIXTime)
 import qualified Database.HDBC as HDBC
 
 import Cole.Cole
@@ -98,4 +99,17 @@ updateSequenceToDone conn sequence = do updateResult <- HDBC.run conn "UPDATE ex
                                         HDBC.commit conn
                                         return updateResult
 
+
+-------------------------------------------------------------------
+-- Get the starting time for a sequence, if any
+getJobStartTime :: HDBC.ConnWrapper -> ColeSequence -> IO (Maybe POSIXTime)
+getJobStartTime conn sequence = do 
+    resultSet <- HDBC.quickQuery' conn "SELECT timestamp FROM experiments WHERE key = ?" [HDBC.toSql $ runSequence sequence]
+    case resultSet of 
+      (r:_) -> return $ HDBC.fromSql $ head r
+      _     -> return $ Nothing
+
+
+
+-------------------------------------------------------------------
 
