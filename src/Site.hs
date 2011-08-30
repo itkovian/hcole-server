@@ -89,10 +89,10 @@ sequence = do
                                         modifyResponse $ setResponseCode 200
                                                        . setContentType (pack "application/json")
                                                        . setContentLength (fromIntegral $ TL.length jsonResponse)
-                                        logError $ "Found key in busy state started at " ++ show starTime
+                                        logError $ "Found key in busy state"
                                         writeText . TL.toStrict $ jsonResponse
         ColeDB.ColeExperimentUnknown -> do liftIO $ ColeJob.launchJob conn s
-                                           logError "Did not find key" ++ show $ Cole.ColeSequence s
+                                           logError "Did not find key"
                                            writeText . TL.toStrict . TLE.decodeUtf8 . A.encode . A.toJSON $ ( "Inserted new experiment" :: String
                                                                                                             , Cole.runSequence s)
 
