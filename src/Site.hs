@@ -66,35 +66,40 @@ cache = heistLocal (bindSplices cacheSplices) $ render "colecache"
 sequence :: Application ()
 sequence = do
     s <- Cole.ColeSequence <$> TE.decodeUtf8 <$> decodedParam "sequence"
-    -- Get the connection to the database
-    conn <- connWrapper
-    -- check if the sequence exists in the cache
-    experimentStatus <- liftIO $ ColeDB.lookup conn s
-    -- FIXME: All lazy stuff should probably become strict as we need the results
-    -- anyways.
-    case experimentStatus of
-        ColeDB.ColeExperimentDone -> do 
-            v <- fsCacheRequest (T.unpack . T.concat $ ["key_", Cole.runSequence s, ".tgz"]) 
-            case v of
-                Just coleData -> do let jsonResponse = TLE.decodeUtf8 . A.encode . A.toJSON $ coleData
-                                    modifyResponse $ setResponseCode 200 
-                                                   . setContentType (pack "application/json")
-                                                   . setContentLength (fromIntegral $ TL.length jsonResponse) --FIXME
-                                    logError "Found key with state Done" 
-                                    writeText . TL.toStrict $ jsonResponse 
-                Nothing -> do modifyResponse $ setResponseCode 404
-                                             . setContentLength 3
-        ColeDB.ColeExperimentBusy -> do startTime <- liftIO $ ColeDB.getJobStartTime conn s
-                                        let jsonResponse = TLE.decodeUtf8 . A.encode . A.toJSON $ "Job for sequence " ++ show (Cole.runSequence s) ++ "started at" ++ show startTime
-                                        modifyResponse $ setResponseCode 200
-                                                       . setContentType (pack "application/json")
-                                                       . setContentLength (fromIntegral $ TL.length jsonResponse)
-                                        logError $ "Found key in busy state"
-                                        writeText . TL.toStrict $ jsonResponse
-        ColeDB.ColeExperimentUnknown -> do liftIO $ ColeJob.launchJob conn s
-                                           logError "Did not find key"
-                                           writeText . TL.toStrict . TLE.decodeUtf8 . A.encode . A.toJSON $ ( "Inserted new experiment" :: String
-                                                                                                            , Cole.runSequence s)
+
+    case Cole.runSequence s of
+      "" -> writeText .  TL.toStrict . TLE.decodeUtf8 . A.encode . A.toJSON $ ("OOPS. Empty sequence not allowed." :: String)
+      _  -> do 
+
+              -- Get the connection to the database
+              conn <- connWrapper
+              -- check if the sequence exists in the cache
+              experimentStatus <- liftIO $ ColeDB.lookup conn s
+              -- FIXME: All lazy stuff should probably become strict as we need the results
+              -- anyways.
+              case experimentStatus of
+                  ColeDB.ColeExperimentDone -> do 
+                      v <- fsCacheRequest (T.unpack . T.concat $ ["key_", Cole.runSequence s, ".tgz"]) 
+                      case v of
+                          Just coleData -> do let jsonResponse = TLE.decodeUtf8 . A.encode . A.toJSON $ coleData
+                                              modifyResponse $ setResponseCode 200 
+                                                             . setContentType (pack "application/json")
+                                                             . setContentLength (fromIntegral $ TL.length jsonResponse) --FIXME
+                                              logError "Found key with state Done" 
+                                              writeText . TL.toStrict $ jsonResponse 
+                          Nothing -> do modifyResponse $ setResponseCode 404
+                                                       . setContentLength 3
+                  ColeDB.ColeExperimentBusy -> do startTime <- liftIO $ ColeDB.getJobStartTime conn s
+                                                  let jsonResponse = TLE.decodeUtf8 . A.encode . A.toJSON $ "Job for sequence " ++ show (Cole.runSequence s) ++ "started at" ++ show startTime
+                                                  modifyResponse $ setResponseCode 200
+                                                                 . setContentType (pack "application/json")
+                                                                 . setContentLength (fromIntegral $ TL.length jsonResponse)
+                                                  logError $ "Found key in busy state"
+                                                  writeText . TL.toStrict $ jsonResponse
+                  ColeDB.ColeExperimentUnknown -> do liftIO $ ColeJob.launchJob conn s
+                                                     logError "Did not find key"
+                                                     writeText . TL.toStrict . TLE.decodeUtf8 . A.encode . A.toJSON $ ( "Inserted new experiment" :: String
+                                                                                                                      , Cole.runSequence s)
 
 
   where
