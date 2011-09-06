@@ -30,7 +30,7 @@ coleConfig :: ColeConfig
 coleConfig = ColeConfig $ M.fromList $ map (\(k, v) -> (T.pack k, T.pack v)) $
     [ ( "ColeExperimentHome",         (home </> "work/det_opt_flags_LLVM/experiments/train-WEKA-modelByBenchmark_by-COLE_gastly_LLVM-svn"))
     , ( "ColeExperimentCache",        (home </> "work/det_opt_flags_LLVM/experiments/train-WEKA-modelByBenchmark_by-COLE_gastly_LLVM-svn/cole-llvm_experiments_CACHE"))
-    , ( "ColeExperimentSubmitScript", "submit_experiments_fast.sh")
+    , ( "ColeExperimentSubmitScript", "submit_experiments_fast_coleserver.sh")
     ]
   where home = unsafePerformIO $ getEnv "HOME" -- FIXME: this is fugly. 
 

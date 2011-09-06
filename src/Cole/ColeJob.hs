@@ -10,6 +10,7 @@ module Cole.ColeJob
   ) where
 
 
+import           Control.Applicative (liftA2)
 import           Control.Concurrent
 import qualified Data.ByteString as BS
 import           Database.HDBC (ConnWrapper)
@@ -43,12 +44,20 @@ launchJob conn sequence = do
     hClose jobTempH
      
     -- fire up the job; the Cole module holds the location details?
-    let jobScript = (T.unpack . fromJust $ getConfigInfo "ColeExperimentHome") </> (T.unpack . fromJust $ getConfigInfo "ColeExperimentSubmitScript") 
-    forkIO $ do path <- fmap fromJust $ getEnv "PATH"
-                putEnv $ "PATH=" ++ path ++ ":" ++ (T.unpack . fromJust $ getConfigInfo "ColeExperimentHome") 
-                exitCode <- rawSystem  jobScript [jobTempFile]
-                insertCode <- case exitCode of
-                                ExitSuccess   -> insertLaunchedSequence conn sequence
-                                ExitFailure e -> insertErrorSequence conn sequence "Failure launching the job" e
-                return ()
+    let coleHome = fmap T.unpack $ getConfigInfo "ColeExperimentHome"
+        coleSubmitScript = fmap T.unpack $ getConfigInfo "ColeExperimentSubmitScript"
+        jobScript = liftA2 (</>) coleHome coleSubmitScript
+
+    
+    case jobScript of
+      Nothing -> error "Error: jobScript is Nothing"
+      _       -> forkIO $ do  path <- getEnv "PATH"
+                              putEnv $ case path of 
+                                            Just p -> "PATH=" ++ p ++ ":" ++ (T.unpack . fromJust $ getConfigInfo "ColeExperimentHome") 
+                                            Nothing -> "PATH=/home/ageorges/.cabal/bin:/home/ageorges/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:" ++ (T.unpack . fromJust $ getConfigInfo "ColeExperimentHome")
+                              exitCode <- rawSystem  (fromJust jobScript) [T.unpack . fromJust $ getConfigInfo "ColeExperimentHome", jobTempFile]
+                              insertCode <- case exitCode of
+                                              ExitSuccess   -> insertLaunchedSequence conn sequence
+                                              ExitFailure e -> insertErrorSequence conn sequence "Failure launching the job" e
+                              return ()
 
