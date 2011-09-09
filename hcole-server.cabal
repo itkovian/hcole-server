@@ -38,6 +38,7 @@ Executable coleserver
     snap-extension-hdbc == 0.0.*,
     snap-extension-hdbc-sqlite3 == 0.0.*,
     snap-server == 0.5.*,
+    stringsearch >= 0.3.6.2,
     tar >= 0.3.1.0,
     text >= 0.11 && < 0.12,
     time >= 1.1 && < 1.3,

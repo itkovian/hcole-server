@@ -15,9 +15,10 @@ module Cole.ColeData
 import           Control.Monad (join, liftM)
 import qualified Data.Aeson as A
 import qualified Data.ByteString as BS
-import qualified Data.ByteString.Char8 as BSC (lines, unlines)
+import qualified Data.ByteString.Char8 as BSC (lines, pack, unlines)
 import           Data.ByteString.Internal (isSpaceWord8)
 import qualified Data.ByteString.Lazy as BSL
+import           Data.ByteString.Search (replace)
 import           Data.Text (pack)
 import qualified Text.CSV.ByteString as CSVB
 
@@ -50,6 +51,7 @@ mkColeData fp = do
                        . BSC.unlines                          -- Back to a single ByteString
                        . map (BS.filter (not . isSpaceWord8)) -- Fixoring @boegels stupid format :-)
                        . BSC.lines                            -- Split so we do not remove newlines ^  
+                       . replaceErrorWithVeryLargeValues
                        . BS.concat                            -- String them together (they are smaller than 64KiB
                        . BSL.toChunks                         -- Make it strict.
 
@@ -64,4 +66,8 @@ instance A.ToJSON ColeData where
 
 -- FIXME: Perhaps we should also have a FromJSON instance?
 
-
+replaceErrorWithVeryLargeValues :: BS.ByteString -> BS.ByteString
+replaceErrorWithVeryLargeValues bs = rep "ERROR" . rep "INVALID" $ bs
+    where rep s bs = let orig = BSC.pack s
+                         subs = BSC.pack "1000000000.0"
+                     in BS.concat . BSL.toChunks $ replace orig subs bs
